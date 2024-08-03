@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, MetaData
+from ..API.v1.constans.db import URI_BD
 
-engine = create_engine("mysql+pymysql://appuser:P4ssw0rd@mysql:3306/fastapi_app")
+engine = create_engine(URI_BD)
 
 meta = MetaData()
 
