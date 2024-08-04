@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from ..users.schema import UserItem
 
 
@@ -74,6 +74,13 @@ class MeResponseSchema(UserItem):
 
 
 class LoginUser(BaseModel):
-    accessToken: str
-    refreshToken: str
+    access_token: str = Field(alias="accessToken")
+    refresh_token: str = Field(alias="refreshToken")
     user: UserItem
+
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+        json_encoders = {
+            str: lambda v: v
+        }

@@ -6,11 +6,25 @@ class RoleItem(BaseModel):
     id: int
     name: str
 
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True
+        json_encoders = {
+            str: lambda v: v
+        }
+
 
 class UserBase(BaseModel):
     full_name: str = Field(alias="fullName")
     email: str
     phone: str
+
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+        json_encoders = {
+            str: lambda v: v
+        }
 
 
 class UserAutoRegister(UserBase):
@@ -36,3 +50,9 @@ class UserItem(UserBase):
     role: RoleItem
 
 
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+        json_encoders = {
+            str: lambda v: v
+        }

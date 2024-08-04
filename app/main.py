@@ -18,8 +18,7 @@ app.add_middleware(
 
 @app.get("/", tags=["Main"])
 def main():
-    
-    return {"message": "api is running"}
+    return {"message": "japiCar Backend"}
 
 
 app.include_router(v1_router, prefix="/api/v1")

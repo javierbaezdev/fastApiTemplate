@@ -9,6 +9,7 @@ services:
       - '3306:3306'
     volumes:
       - ./mysql/conf.d:/etc/mysql/conf.d
+
     env_file:
       - ./mysql/local.env
     tty: true

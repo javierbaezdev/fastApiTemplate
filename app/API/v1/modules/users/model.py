@@ -1,37 +1,34 @@
-from sqlalchemy import Table, Column
-from sqlalchemy.sql.sqltypes import Integer, String
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.sql.schema import ForeignKey
-from .....config.db import engine, meta
-from ...helpers.mixin import TimestampMixin, DeletedMixin
+from sqlalchemy.orm import relationship
 
+from app.database.base_class import Base, TimestampMixin, SoftDeleteMixin
 
-acceptedTermsTable = Table("accepted_terms", meta,
-    Column("id", Integer, primary_key=True),
-    Column("description", String(500), nullable=False),
-    *TimestampMixin.get_columns(),
-    *DeletedMixin.get_columns(),
+class AcceptedTerms(Base, SoftDeleteMixin, TimestampMixin):
+    __tablename__ = "accepted_terms"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    description = Column(String(500), nullable=False)
 
-    Column("user_id", Integer, ForeignKey("users.id"), nullable=False),
-)
+class Role(Base, SoftDeleteMixin, TimestampMixin):
+    __tablename__ = "roles"
+    id = Column(Integer, primary_key=True)
+    name = Column(String(60), nullable=False, unique=True)
 
-rolesTable = Table("roles", meta,
-    Column("id", Integer, primary_key=True),
-    Column("name", String(50), nullable=False),
-    *TimestampMixin.get_columns(),
-    *DeletedMixin.get_columns(),
-)
+    # One-to-one relationship with User
+    user = relationship("User", back_populates="role", uselist=False)
 
-usersTable = Table("users", meta,
-    Column("id", Integer, primary_key=True),
-    Column("full_name", String(60), nullable=False),
-    Column("password", String(500), nullable=False),
-    Column("email", String(50), nullable=False, unique=True),
-    Column("phone", String(50), nullable=False),
-    *TimestampMixin.get_columns(),
-    *DeletedMixin.get_columns(),
+class User(Base, SoftDeleteMixin, TimestampMixin):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    full_name = Column(String(60), nullable=False)
+    email = Column(String(60), nullable=False, unique=True)
+    phone = Column(String(60), nullable=False)
+    password = Column(String(100), nullable=False)
 
-    Column("role_id", Integer, ForeignKey("roles.id"), nullable=False)
-)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
 
-meta.create_all(engine)
+    # One-to-one relationship with Role
+    role = relationship("Role", back_populates="user")
 
+    

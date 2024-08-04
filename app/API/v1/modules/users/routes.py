@@ -1,20 +1,21 @@
 import sys
 from fastapi import APIRouter, HTTPException
-from sqlalchemy import select
-from .model import usersTable, acceptedTermsTable, rolesTable
-from .schema import UserAutoRegister
-from .....config.db import conn
-from ...helpers.security import get_password_hash
+from fastapi.param_functions import Depends
+from sqlalchemy.orm.session import Session
+from app.database.main import get_database
 
-router = APIRouter(prefix="/users", tags=["users"])
 
-@router.post("/all")
-async def get_users():
-    return conn.execute(usersTable.select()).fetchall()
+from ...services.security import get_password_hash
+from app.API.v1.modules.users.schema import UserAutoRegister
+from app.API.v1.modules.users.model import User, AcceptedTerms
+
+
+router = APIRouter(prefix="/users", tags=["Users"])
+
 
 
 @router.post("/auto-register")
-async def auto_register_user(body: UserAutoRegister):
+def create_user(body: UserAutoRegister, db: Session = Depends(get_database)):
     try:
         if (body.password != body.confirm_password):
             raise HTTPException(
@@ -27,10 +28,8 @@ async def auto_register_user(body: UserAutoRegister):
                 status_code=400,
                 detail="Tienes que aceptar los términos y condiciones",
             )
-        
-        
         # validate email
-        current_user = conn.execute(usersTable.select().where(usersTable.c.email == body.email)).first()
+        current_user = db.query(User).filter(User.email == body.email).first()
         if current_user:
             raise HTTPException(
                 status_code=400,
@@ -38,41 +37,25 @@ async def auto_register_user(body: UserAutoRegister):
             )
        
         hashed_password = get_password_hash(body.password)
-        new_user = {"full_name": body.full_name, "email": body.email, "phone": body.phone, "password": hashed_password, "role_id": 1} # Default role is CLIENTS
-        
-        result = conn.execute(usersTable.insert().values(new_user))
+        user_data = body.dict()
+        del user_data['confirm_password']
+        del user_data['accept_terms']
+        user_data['password'] = hashed_password
+        user_data['role_id'] = 1 # Default role is CLIENTS
 
-        user_id = result.lastrowid
+        new_user = User(**user_data)
+        db.add(new_user)
+        db.commit()
+        db.flush(User)
 
-        accepted_terms = {"user_id": user_id, "description": "ok"}
-        conn.execute(acceptedTermsTable.insert().values(accepted_terms))
-        
-        stmt = (
-            select(
-                usersTable,                      
-                rolesTable.c.id.label('roles_table_id'), 
-                rolesTable.c.name.label('roles_table_name')
-            )
-            .select_from(usersTable.join(rolesTable, usersTable.c.role_id == rolesTable.c.id))
-            .where(usersTable.c.id == user_id)
-        )
-
-        user_created = conn.execute(stmt).first()
-
-        user_data = {column: user_created[column] for column in usersTable.columns.keys()}
-
-        role_data = {
-            'name': user_created['roles_table_name']
-        }
+        user_id = new_user.id
+        accepted_terms = AcceptedTerms(user_id=user_id, description='ok')
+        db.add(accepted_terms)
+        db.commit()
+        db.flush(AcceptedTerms)
 
         del user_data['password']
-        user_data['role'] = role_data
-
         return user_data
-            
-
-
-        
     except Exception as err:
         print("Error in line:", sys.exc_info()[-1].tb_lineno)
         print("Error message : {0}".format(err))
@@ -84,3 +67,4 @@ async def auto_register_user(body: UserAutoRegister):
             )
         else:
             raise HTTPException(400, format(err))
+
