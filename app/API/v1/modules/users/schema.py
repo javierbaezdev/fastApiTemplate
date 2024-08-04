@@ -1,27 +1,24 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 from typing import Optional
+from datetime import datetime
+
+from ...helpers.schema import Base
 
 
-class RoleItem(BaseModel):
+class RoleItem(Base):
     id: int
     name: str
 
-    class Config:
-        orm_mode = True
-        allow_population_by_field_name = True
-        json_encoders = {
-            str: lambda v: v
-        }
 
 
-class UserBase(BaseModel):
+class UserBase(Base):
     full_name: str = Field(alias="fullName")
     email: str
     phone: str
 
     class Config:
-        allow_population_by_field_name = True
         orm_mode = True
+        allow_population_by_field_name = True
         json_encoders = {
             str: lambda v: v
         }
@@ -56,3 +53,10 @@ class UserItem(UserBase):
         json_encoders = {
             str: lambda v: v
         }
+
+
+class UserItemBasic(UserBase):
+    id: int
+    role_id: Optional[int] = Field(..., alias="roleId")
+
+        

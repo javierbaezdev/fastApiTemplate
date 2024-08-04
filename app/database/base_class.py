@@ -1,11 +1,10 @@
 from typing import Any
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.orm import declarative_mixin, declared_attr
-from sqlalchemy.sql.schema import ForeignKey
 from sqlalchemy.ext.declarative import as_declarative
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.schema import Column
-from sqlalchemy.sql.sqltypes import Boolean, DateTime, Integer, String, Time, Numeric
+from sqlalchemy.sql.sqltypes import Boolean, DateTime
 
 
 @as_declarative()
